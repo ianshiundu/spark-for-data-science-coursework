@@ -8,8 +8,6 @@ object WordCountFastest {
   def main(args: Array[String]): Unit = {
     val inpath = "data/all-shakespeare.txt"
     val outpath = "output/word_count1"
-    val resourcePath = getClass.getResource("++++++++++++++++++++++++++" + inpath)
-    println(resourcePath)
 
     val sc = new SparkContext("local[*]", "Word Count")
     try {
