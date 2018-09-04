@@ -1,15 +1,17 @@
-package com.module.WordCount
+package com.module.wordcount
 
+import com.module.util.Files
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-
 
 object WordCountFastest {
   def main(args: Array[String]): Unit = {
     val inpath = "data/all-shakespeare.txt"
     val outpath = "output/word_count1"
 
-    val sc = new SparkContext("local[*]", "Word Count")
+    Files.rmrf(outpath) // delete old (DON'T IN PROD)
+
+    val sc = new SparkContext("local[*]", "Word Count Fastest")
     try {
       val input: RDD[String] = sc.textFile(inpath)
       val wc = input
