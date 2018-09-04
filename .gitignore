@@ -38,6 +38,7 @@ project/play-fork-run.sbt
 project/sbt-ui.sbt
 data/checkpoint
 data/Divvy
+data/
 .svn
 tmp/**
 node_modules/
