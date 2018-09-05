@@ -172,5 +172,23 @@ object Flight {
         None
     }
   }
-  
+
+//  Carrier data
+  case class Carrier(
+                    code: String, // 1: Airline code, e.g., UA for United Airlines
+                    description: String  // 2: Full name
+                    )
+
+  object Carrier {
+//    The two strings are quoted but not including the header row
+    val headerRE = """^\s*Code\s*,.*""".r
+    val lineRE = """^\s*"([^"]+)"\s*,\s*"([^"]+)"\s*$""".r
+    def parse(line: String): Option[Carrier] = line match {
+      case headerRE() ⇒ None
+      case lineRE(code, desc) ⇒ Some(Carrier(code.trim, desc.trim))
+      case line ⇒
+        Console.err.println(s"ERROR: Invalid Carrier line: $line")
+        None
+    }
+  }
 }
