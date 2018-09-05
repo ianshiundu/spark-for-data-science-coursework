@@ -11,9 +11,9 @@ package com.module.mldata
   * actually leaving the gate are usually attributed to the NAS.
   * CRS is the Computer Reservation System.
   * Because case classes in Scala 2.10 are still limited to 22 fields, nested
-  * instances of {@link Flight.Date} and {@link Flight.Times} types are used
+  * instances of `Flight.Date` and `Flight.Times` types are used
   * to encapsulate some of the fields.
-  * TODO: Note below that {@link Flight.Date} and {@link Flight.Times} types
+  * TODO: Note below that `Flight.Date` and `Flight.Times` types
   * both extend <code>Ordered</code>. <code>Flight</code> should, too.
   */
 
