@@ -1,5 +1,7 @@
 package com.module.mldata
 
+import scala.util.matching.Regex
+
 /**
   * Represent flight data from RITA (http://www.rita.dot.gov/), hosted at
   * http://stat-computing.org/dataexpo/2009/the-data.html.
@@ -10,7 +12,7 @@ package com.module.mldata
   * heavy traffic volume, air traffic control, etc. Delays that occur after
   * actually leaving the gate are usually attributed to the NAS.
   * CRS is the Computer Reservation System.
-  * Because case classes in Scala 2.10 are still limited to 22 fields, nested
+  * Because case classes in Scala are still limited to 22 fields, nested
   * instances of `Flight.Date` and `Flight.Times` types are used
   * to encapsulate some of the fields.
   * TODO: Note below that `Flight.Date` and `Flight.Times` types
@@ -160,8 +162,8 @@ object Flight {
     // the value is NA. There is still one entry we don't handle correctly,
     // where the name is "W. H. \"Bud\" Barron ", due to the escaped quotes.
 
-    val headerRE = """^\s*"iata"\s*,.*""".r
-    val lineRE =
+    val headerRE: Regex = """^\s*"iata"\s*,.*""".r
+    val lineRE: Regex =
       """^\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"?([^"]+)"?\s*,\s*"?([^"]+)"?\s*,\s*"([^"]+)"\s*,\s*([-.\d]+)\s*,\s*([-.\d]+)\s*$""".r
     def parse(s: String): Option[Airport] = s match {
       case headerRE() ⇒ None
@@ -181,14 +183,49 @@ object Flight {
 
   object Carrier {
 //    The two strings are quoted but not including the header row
-    val headerRE = """^\s*Code\s*,.*""".r
-    val lineRE = """^\s*"([^"]+)"\s*,\s*"([^"]+)"\s*$""".r
+    val headerRE: Regex = """^\s*Code\s*,.*""".r
+    val lineRE: Regex = """^\s*"([^"]+)"\s*,\s*"([^"]+)"\s*$""".r
     def parse(line: String): Option[Carrier] = line match {
       case headerRE() ⇒ None
       case lineRE(code, desc) ⇒ Some(Carrier(code.trim, desc.trim))
-      case line ⇒
+      case `line` ⇒
         Console.err.println(s"ERROR: Invalid Carrier line: $line")
         None
     }
   }
+
+  //  Plane data
+  case class Plane(
+                    tailNum:      String,  // 1: E.g., N12345
+                    kind:         String,  // 2: Usually "Corporation"
+                    manufacturer: String,  // 3: E.g., Boeing
+                    issueDate:    String,  // 4: MM/DD/YYYY
+                    model:        String,  // 5: E.g., 767-201
+                    status:       String,  // 6: Usually "Valid"
+                    aircraftType: String,  // 7: Usually "Fixed Wing Multi-Engine"
+                    engineType:   String,  // 8: E.g., "Turbo-Fan" or "Turbo-Jet"
+                    year:         Int      // 9: YYYY
+                  )
+
+  object Plane {
+//    The string fields are NOT quoted.
+    val headerRE: Regex = """^\s*tailnum\s*,.*""".r
+    val tailOnlyRE: Regex = """^\s*(N\w+)\s*$""".r
+    val lineRE: Regex =
+      """^\s*(N[^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*(\S+)\s*$""".r
+
+    def parse(line: String): Option[Plane] = line match {
+      case headerRE() ⇒ None
+      case tailOnlyRE(tail) ⇒
+        Some(Plane(tail, "", "", "", "", "", "", "", 0))
+      case lineRE(tail, kind, man, iss, mod, stat, air, eng, yr) ⇒
+        val year = if (yr == "None") -1 else Conversions.toInt(yr)
+        Some(Plane(tail, kind, man, iss, mod, stat, air, eng, year))
+      case `line` ⇒
+        Console.err.println(s"ERROR: Invalid Plane line: $line")
+        None
+    }
+  }
+
+
 }
