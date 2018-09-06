@@ -72,6 +72,19 @@ object SparkDataFrames {
         // this case).
       }
 
+      // SELECT cf.date.month AS month, COUNT(*)
+      //   FROM canceled_flights cf
+      //   GROUP BY cf.date.month
+      //   ORDER BY month;
+      val canceled_flights_by_month = canceled_flights.
+        groupBy("date.month").count()
+      Printer(out, "canceled flights by month", canceled_flights_by_month)
+      if (!quiet) {
+        out.println("\ncanceled_flights_by_month.explain(true):")
+        canceled_flights_by_month.explain(true)
+      }
+      canceled_flights.unpersist
+
     }
   }
 
