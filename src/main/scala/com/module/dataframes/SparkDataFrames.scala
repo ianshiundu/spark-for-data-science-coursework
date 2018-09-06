@@ -85,6 +85,60 @@ object SparkDataFrames {
       }
       canceled_flights.unpersist
 
+      // Before running the next query, change the shuffle.partitions property to 50:
+      sqlContext.setConf("spark.sql.shuffle.partitions", "50")
+
+      // SELECT origin, dest, COUNT(*) AS cnt
+      //   FROM flights
+      //   GROUP BY origin, dest
+      //   ORDER BY cnt DESC, origin, dest;
+      val flights_between_airports50 = flights.select($"origin", $"dest").
+        groupBy($"origin", $"dest").count().
+        orderBy($"count".desc, $"origin", $"dest")
+      Printer(out, "Flights between airports, sorted by airports", flights_between_airports50)
+
+      val flights_between_airports = flights.select($"origin", $"dest").
+        groupBy($"origin", $"dest").count().
+        orderBy($"count".desc, $"origin", $"dest")
+      Printer(out, "Flights between airports, sorted by airports", flights_between_airports)
+      if (!quiet) {
+        println("\nflights_between_airports.explain(true):")
+        flights_between_airports.explain(true)
+      }
+
+      flights_between_airports.cache
+
+      // it's sometimes useful to coalesce to a smaller number of partitions
+      // after calling an operation like `groupBy`, where the number of resulting
+      // records may drop dramatically (but they records become correspondingly bigger!).
+      // Specifically, `groupBy` returns a `GroupedData` object, on which we call
+      // `count`, which returns a new `DataFrame`. That's what we coalesce on so that
+      // `orderBy` can potentially be much faster. HOWEVER, because we set the default
+      // number of partitions to 4 with the property above, in this particular case,
+      // this doesn't make much difference.
+      val flights_between_airports2 = flights.
+        groupBy($"origin", $"dest").count().coalesce(2).
+        sort($"count".desc, $"origin", $"dest")
+      Printer(out, "Flights between airports, sorted by airports", flights_between_airports2)
+      if (!quiet) {
+        println("\nflights_between_airports2.explain(true):")
+        flights_between_airports2.explain(true)
+      }
+
+      // SELECT origin, dest, COUNT(*)
+      //   FROM flights_between_airports
+      //   ORDER BY count DESC;
+      val frequent_flights_between_airports =
+      flights_between_airports.orderBy($"count".desc)
+      // Show all of them (~170)
+      Printer(out, "Flights between airports, sorted by counts descending", frequent_flights_between_airports, 200)
+      if (!quiet) {
+        out.println("\nfrequent_flights_between_airports.explain(true):")
+        frequent_flights_between_airports.explain(true)
+      }
+
+    } finally {
+      sc.stop()
     }
   }
 
