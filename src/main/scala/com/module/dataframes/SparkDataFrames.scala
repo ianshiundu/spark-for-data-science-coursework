@@ -52,6 +52,15 @@ object SparkDataFrames {
       // SELECT COUNT(*) FROM flights f WHERE f.canceled > 0;
       val canceled_flights = flights.filter(flights("canceled") > 0)
       Printer(out, "canceled flights", canceled_flights)
+      if (!quiet) {
+        out.println("\ncanceled_flights.explain(extended = false):")
+        canceled_flights.explain(extended = false)
+        out.println("\ncanceled_flights.explain(extended = true):")
+        canceled_flights.explain(extended = true)
+      }
+      canceled_flights.cache
+
+//      Reference columns
       if(!quiet) {
         flights.orderBy(flights("origin")).show
         flights.orderBy("origin").show
