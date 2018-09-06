@@ -1,8 +1,11 @@
 package com.module.dataframes
 
 import com.module.mldata.{Airport, Flight}
+import com.module.util.Printer
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.{SparkConf, SparkContext}
+
+
 /**
   * Spark DataFrames, a Python Pandas-like API built on top of
   * SparkSQL with better performance than RDDs, due to the use of Catalyst
@@ -45,6 +48,20 @@ object SparkDataFrames {
 //      cache flights and airports
       flights.cache
       airports.cache
+
+      // SELECT COUNT(*) FROM flights f WHERE f.canceled > 0;
+      val canceled_flights = flights.filter(flights("canceled") > 0)
+      Printer(out, "canceled flights", canceled_flights)
+      if(!quiet) {
+        flights.orderBy(flights("origin")).show
+        flights.orderBy("origin").show
+        flights.orderBy($"origin").show
+        flights.orderBy($"origin".desc).show
+        // The last one $"count".desc is the only (?) way to specify descending order.
+        // The $"..." is not a Scala built-in feature, but Scala allows you to
+        // implement "interpolated string" handlers with your own prefix ($ in
+        // this case).
+      }
 
     }
   }
