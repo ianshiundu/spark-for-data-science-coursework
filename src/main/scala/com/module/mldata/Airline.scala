@@ -39,12 +39,13 @@ case class Flight(
                  )  // No class body needed. What methods are added automatically by "case"?
 
 object Flight {
-//  Dates used in Flight instance
+
+  //  Dates used in Flight instance
   case class Date(
-                   year:              Int,     //  1:  1987-2008
-                   month:             Int,     //  2:  1-12
-                   dayOfMonth:        Int,     //  3:  1-31
-                   dayOfWeek:         Int      //  4:  1 (Monday) - 7 (Sunday)
+                   year: Int, //  1:  1987-2008
+                   month: Int, //  2:  1-12
+                   dayOfMonth: Int, //  3:  1-31
+                   dayOfWeek: Int //  4:  1 (Monday) - 7 (Sunday)
                  ) extends Ordered[Date] {
     override def compare(that: Date): Int = {
       val diffYear = year - that.year
@@ -56,7 +57,7 @@ object Flight {
       }
     }
 
-//    Counts from 1 and starts at Monday
+    //    Counts from 1 and starts at Monday
     private val dayOfWeekToString = Vector(
       "", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
 
@@ -64,26 +65,26 @@ object Flight {
       "%4d-%02d-%02d (%s)".format(year, month, dayOfMonth, dayOfWeekToString(dayOfWeek))
   }
 
-//  Times type used in flight instances
+  //  Times type used in flight instances
   case class Times(
-                    depTime:           Int,     //  5:  actual departure time (local, hhmm)
-                    crsDepTime:        Int,     //  6:  scheduled departure time (local, hhmm)
-                    arrTime:           Int,     //  7:  actual arrival time (local, hhmm)
-                    crsArrTime:        Int,     //  8:  scheduled arrival time (local, hhmm)
-                    actualElapsedTime: Int,     // 12:  in minutes
-                    crsElapsedTime:    Int,     // 13:  in minutes
-                    airTime:           Int,     // 14:  in minutes
-                    arrDelay:          Int,     // 15:  arrival delay, in minutes
-                    depDelay:          Int,     // 16:  departure delay, in minutes
-                    taxiIn:            Int,     // 20:  taxi in time, in minutes
-                    taxiOut:           Int      // 21:  taxi out time in minutes
+                    depTime: Int, //  5:  actual departure time (local, hhmm)
+                    crsDepTime: Int, //  6:  scheduled departure time (local, hhmm)
+                    arrTime: Int, //  7:  actual arrival time (local, hhmm)
+                    crsArrTime: Int, //  8:  scheduled arrival time (local, hhmm)
+                    actualElapsedTime: Int, // 12:  in minutes
+                    crsElapsedTime: Int, // 13:  in minutes
+                    airTime: Int, // 14:  in minutes
+                    arrDelay: Int, // 15:  arrival delay, in minutes
+                    depDelay: Int, // 16:  departure delay, in minutes
+                    taxiIn: Int, // 20:  taxi in time, in minutes
+                    taxiOut: Int // 21:  taxi out time in minutes
                   ) extends Ordered[Times] {
     override def compare(that: Times): Int = {
       val diffDepTime = depTime - that.depTime
       if (diffDepTime != 0) diffDepTime
       else {
         val diffCRSDepTime = crsDepTime - that.crsDepTime
-        if (diffCRSDepTime!= 0) diffCRSDepTime
+        if (diffCRSDepTime != 0) diffCRSDepTime
         else {
           val diffArrTime = arrTime - that.arrTime
           if (diffArrTime != 0) diffArrTime
@@ -92,10 +93,11 @@ object Flight {
       }
     }
 
+
     override def toString: String =
       s"($depTime,$crsDepTime,$arrTime,$crsArrTime,$actualElapsedTime,$crsElapsedTime,$airTime,$arrDelay,$depDelay,$taxiIn,$taxiOut)"
-
-  // The string fields are NOT quoted.
+  }
+    // The string fields are NOT quoted.
     def parse(line: String): Option[Flight] = {
       val fields = line.trim.split("""\s*,\s*""")
       try {
@@ -144,88 +146,86 @@ object Flight {
           None
       }
     }
-  }
+}
 
 //  Airport data
-  case class Airport(
-                      iata:      String,    // 1: IATA code
-                      airport:   String,    // 2: Name
-                      city:      String,    // 3: City
-                      state:     String,    // 4: State
-                      country:   String,    // 5: Country
-                      latitude:  Float,     // 6: Latitude
-                      longitude: Float      // 7: Longitude
-                    )
-
-  object Airport {
-    // All the string fields are quoted, including in the header row, UNLESS
-    // the value is NA. There is still one entry we don't handle correctly,
-    // where the name is "W. H. \"Bud\" Barron ", due to the escaped quotes.
-
-    val headerRE: Regex = """^\s*"iata"\s*,.*""".r
-    val lineRE: Regex =
-      """^\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"?([^"]+)"?\s*,\s*"?([^"]+)"?\s*,\s*"([^"]+)"\s*,\s*([-.\d]+)\s*,\s*([-.\d]+)\s*$""".r
-    def parse(s: String): Option[Airport] = s match {
-      case headerRE() ⇒ None
-      case lineRE(iata, airport, city, state, country, lat, lng) ⇒
-        Some(Airport(iata.trim, airport.trim, city.trim, state.trim, country.trim, lat.toFloat, lng.toFloat))
-      case line ⇒
-        Console.err.println(s"ERROR: Invalid Airport line: $line")
-        None
-    }
-  }
-
-//  Carrier data
-  case class Carrier(
-                    code: String, // 1: Airline code, e.g., UA for United Airlines
-                    description: String  // 2: Full name
-                    )
-
-  object Carrier {
-//    The two strings are quoted but not including the header row
-    val headerRE: Regex = """^\s*Code\s*,.*""".r
-    val lineRE: Regex = """^\s*"([^"]+)"\s*,\s*"([^"]+)"\s*$""".r
-    def parse(line: String): Option[Carrier] = line match {
-      case headerRE() ⇒ None
-      case lineRE(code, desc) ⇒ Some(Carrier(code.trim, desc.trim))
-      case `line` ⇒
-        Console.err.println(s"ERROR: Invalid Carrier line: $line")
-        None
-    }
-  }
-
-  //  Plane data
-  case class Plane(
-                    tailNum:      String,  // 1: E.g., N12345
-                    kind:         String,  // 2: Usually "Corporation"
-                    manufacturer: String,  // 3: E.g., Boeing
-                    issueDate:    String,  // 4: MM/DD/YYYY
-                    model:        String,  // 5: E.g., 767-201
-                    status:       String,  // 6: Usually "Valid"
-                    aircraftType: String,  // 7: Usually "Fixed Wing Multi-Engine"
-                    engineType:   String,  // 8: E.g., "Turbo-Fan" or "Turbo-Jet"
-                    year:         Int      // 9: YYYY
+case class Airport(
+                    iata:      String,    // 1: IATA code
+                    airport:   String,    // 2: Name
+                    city:      String,    // 3: City
+                    state:     String,    // 4: State
+                    country:   String,    // 5: Country
+                    latitude:  Float,     // 6: Latitude
+                    longitude: Float      // 7: Longitude
                   )
 
-  object Plane {
-//    The string fields are NOT quoted.
-    val headerRE: Regex = """^\s*tailnum\s*,.*""".r
-    val tailOnlyRE: Regex = """^\s*(N\w+)\s*$""".r
-    val lineRE: Regex =
-      """^\s*(N[^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*(\S+)\s*$""".r
+object Airport {
+  // All the string fields are quoted, including in the header row, UNLESS
+  // the value is NA. There is still one entry we don't handle correctly,
+  // where the name is "W. H. \"Bud\" Barron ", due to the escaped quotes.
 
-    def parse(line: String): Option[Plane] = line match {
-      case headerRE() ⇒ None
-      case tailOnlyRE(tail) ⇒
-        Some(Plane(tail, "", "", "", "", "", "", "", 0))
-      case lineRE(tail, kind, man, iss, mod, stat, air, eng, yr) ⇒
-        val year = if (yr == "None") -1 else Conversions.toInt(yr)
-        Some(Plane(tail, kind, man, iss, mod, stat, air, eng, year))
-      case `line` ⇒
-        Console.err.println(s"ERROR: Invalid Plane line: $line")
-        None
-    }
+  val headerRE: Regex = """^\s*"iata"\s*,.*""".r
+  val lineRE: Regex =
+    """^\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"?([^"]+)"?\s*,\s*"?([^"]+)"?\s*,\s*"([^"]+)"\s*,\s*([-.\d]+)\s*,\s*([-.\d]+)\s*$""".r
+  def parse(s: String): Option[Airport] = s match {
+    case headerRE() ⇒ None
+    case lineRE(iata, airport, city, state, country, lat, lng) ⇒
+      Some(Airport(iata.trim, airport.trim, city.trim, state.trim, country.trim, lat.toFloat, lng.toFloat))
+    case line ⇒
+      Console.err.println(s"ERROR: Invalid Airport line: $line")
+      None
   }
-
-
 }
+
+//  Carrier data
+case class Carrier(
+                  code: String, // 1: Airline code, e.g., UA for United Airlines
+                  description: String  // 2: Full name
+                  )
+
+object Carrier {
+//    The two strings are quoted but not including the header row
+  val headerRE: Regex = """^\s*Code\s*,.*""".r
+  val lineRE: Regex = """^\s*"([^"]+)"\s*,\s*"([^"]+)"\s*$""".r
+  def parse(line: String): Option[Carrier] = line match {
+    case headerRE() ⇒ None
+    case lineRE(code, desc) ⇒ Some(Carrier(code.trim, desc.trim))
+    case `line` ⇒
+      Console.err.println(s"ERROR: Invalid Carrier line: $line")
+      None
+  }
+}
+
+//  Plane data
+case class Plane(
+                  tailNum:      String,  // 1: E.g., N12345
+                  kind:         String,  // 2: Usually "Corporation"
+                  manufacturer: String,  // 3: E.g., Boeing
+                  issueDate:    String,  // 4: MM/DD/YYYY
+                  model:        String,  // 5: E.g., 767-201
+                  status:       String,  // 6: Usually "Valid"
+                  aircraftType: String,  // 7: Usually "Fixed Wing Multi-Engine"
+                  engineType:   String,  // 8: E.g., "Turbo-Fan" or "Turbo-Jet"
+                  year:         Int      // 9: YYYY
+                )
+
+object Plane {
+//    The string fields are NOT quoted.
+  val headerRE: Regex = """^\s*tailnum\s*,.*""".r
+  val tailOnlyRE: Regex = """^\s*(N\w+)\s*$""".r
+  val lineRE: Regex =
+    """^\s*(N[^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*(\S+)\s*$""".r
+
+  def parse(line: String): Option[Plane] = line match {
+    case headerRE() ⇒ None
+    case tailOnlyRE(tail) ⇒
+      Some(Plane(tail, "", "", "", "", "", "", "", 0))
+    case lineRE(tail, kind, man, iss, mod, stat, air, eng, yr) ⇒
+      val year = if (yr == "None") -1 else Conversions.toInt(yr)
+      Some(Plane(tail, kind, man, iss, mod, stat, air, eng, year))
+    case `line` ⇒
+      Console.err.println(s"ERROR: Invalid Plane line: $line")
+      None
+  }
+}
+
