@@ -15,14 +15,16 @@ import org.apache.spark.sql.DataFrame
 
 object Printer {
 //  Print DataFrame after taking the first n elements.
-  def apply(out: PrintStream, msg: String, df: DataFrame, n: Int = 100): Unit = apply(out, msg, df, n)
+  def apply(out: PrintStream, msg: String, df: DataFrame, n: Int = 100): Unit =
+    apply(out, msg, df.rdd, n)
 
   /**
     * Print the RDD after taking the first 100 elements.
     * Because this function is overloaded, only one version can
     * have default arguments.
     */
-  def print[T](out: PrintStream, msg: String, rdd: RDD[T]): Unit = apply(out, msg, rdd, 100)
+  def print[T](out: PrintStream, msg: String, rdd: RDD[T]): Unit =
+    apply(out, msg, rdd, 100)
 
   /**
     * Print the RDD after taking the first n elements.
@@ -31,7 +33,7 @@ object Printer {
     */
   def apply[T](out: PrintStream, msg: String, rdd: RDD[T], n: Int): Unit = {
     out.println(s"$msg: (size = ${rdd.count}")
-    rdd.take(n) foreach println
+    rdd.take(n) foreach (record => out.println(record))
   }
 
 }
