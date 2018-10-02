@@ -2,19 +2,19 @@ name := "ibm-spark-course"
 
 version := "0.1"
 
-scalaVersion := "2.11.9"
+scalaVersion := "2.10.5"
 
-val sparkVersion = "2.3.1"
+val sparkVersion = "1.5.2"
 
 libraryDependencies ++= Seq(
-  "org.apache.spark" %% "spark-core"              % sparkVersion,
-  "org.apache.spark" %% "spark-streaming"         % sparkVersion % "provided",
-  "org.apache.spark" %% "spark-sql"               % sparkVersion,
-  "org.apache.spark" %% "spark-hive"              % sparkVersion % "provided",
-  "org.apache.spark" %% "spark-streaming-twitter" % "1.6.3",
-  "org.apache.spark" %% "spark-mllib"             % sparkVersion % "runtime",
-  "org.twitter4j"    % "twitter4j-core"           % "4.0.7",
-  "com.databricks"   %% "spark-csv"               % "1.5.0"
+  "org.apache.spark" %% "spark-core"              % sparkVersion withSources(),
+  "org.apache.spark" %% "spark-streaming"         % sparkVersion withSources(),
+  "org.apache.spark" %% "spark-sql"               % sparkVersion withSources(),
+  "org.apache.spark" %% "spark-hive"              % sparkVersion withSources(),
+  "org.apache.spark" %% "spark-streaming-twitter" % sparkVersion withSources(),
+  "org.apache.spark" %% "spark-mllib"             % sparkVersion withSources(),
+  "org.twitter4j"    %  "twitter4j-core"          % "3.0.3" withSources(),
+  "com.databricks"   %% "spark-csv"               % "1.3.0"      withSources()
 )
 
 initialCommands += """
