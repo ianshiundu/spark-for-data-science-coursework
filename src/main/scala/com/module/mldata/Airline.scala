@@ -1,6 +1,6 @@
 package com.module.mldata
 
-import scala.util.matching.Regex
+import scala.math.Ordered
 
 /**
   * Represent flight data from RITA (http://www.rita.dot.gov/), hosted at
@@ -12,13 +12,12 @@ import scala.util.matching.Regex
   * heavy traffic volume, air traffic control, etc. Delays that occur after
   * actually leaving the gate are usually attributed to the NAS.
   * CRS is the Computer Reservation System.
-  * Because case classes in Scala are still limited to 22 fields, nested
-  * instances of `Flight.Date` and `Flight.Times` types are used
+  * Because case classes in Scala 2.10 are still limited to 22 fields, nested
+  * instances of {@link Flight.Date} and {@link Flight.Times} types are used
   * to encapsulate some of the fields.
-  * TODO: Note below that `Flight.Date` and `Flight.Times` types
+  * TODO: Note below that {@link Flight.Date} and {@link Flight.Times} types
   * both extend <code>Ordered</code>. <code>Flight</code> should, too.
   */
-
 case class Flight(
                    date:              Flight.Date,  // fields 1-4.
                    times:             Flight.Times, // fields 5-8, 12-16, 20-21
@@ -40,14 +39,14 @@ case class Flight(
 
 object Flight {
 
-  //  Dates used in Flight instance
+  /** Date type used in Flight instances. */
   case class Date(
-                   year: Int, //  1:  1987-2008
-                   month: Int, //  2:  1-12
-                   dayOfMonth: Int, //  3:  1-31
-                   dayOfWeek: Int //  4:  1 (Monday) - 7 (Sunday)
+                   year:              Int,     //  1:  1987-2008
+                   month:             Int,     //  2:  1-12
+                   dayOfMonth:        Int,     //  3:  1-31
+                   dayOfWeek:         Int      //  4:  1 (Monday) - 7 (Sunday)
                  ) extends Ordered[Date] {
-    override def compare(that: Date): Int = {
+    def compare(that: Date): Int = {
       val diffYear = year - that.year
       if (diffYear != 0) diffYear
       else {
@@ -57,29 +56,30 @@ object Flight {
       }
     }
 
-    //    Counts from 1 and starts at Monday
+    // Counts from 1 and starts at Monday.
     private val dayOfWeekToString = Vector(
-      "", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+      "", "Monday", "Tuesday", "Wednesday", "Thurday", "Friday", "Saturday", "Sunday")
 
-    override def toString: String =
+    override def toString =
       "%4d-%02d-%02d (%s)".format(year, month, dayOfMonth, dayOfWeekToString(dayOfWeek))
   }
 
-  //  Times type used in flight instances
+  /** Times type used in Flight instances. */
   case class Times(
-                    depTime: Int, //  5:  actual departure time (local, hhmm)
-                    crsDepTime: Int, //  6:  scheduled departure time (local, hhmm)
-                    arrTime: Int, //  7:  actual arrival time (local, hhmm)
-                    crsArrTime: Int, //  8:  scheduled arrival time (local, hhmm)
-                    actualElapsedTime: Int, // 12:  in minutes
-                    crsElapsedTime: Int, // 13:  in minutes
-                    airTime: Int, // 14:  in minutes
-                    arrDelay: Int, // 15:  arrival delay, in minutes
-                    depDelay: Int, // 16:  departure delay, in minutes
-                    taxiIn: Int, // 20:  taxi in time, in minutes
-                    taxiOut: Int // 21:  taxi out time in minutes
+                    depTime:           Int,     //  5:  actual departure time (local, hhmm)
+                    crsDepTime:        Int,     //  6:  scheduled departure time (local, hhmm)
+                    arrTime:           Int,     //  7:  actual arrival time (local, hhmm)
+                    crsArrTime:        Int,     //  8:  scheduled arrival time (local, hhmm)
+                    actualElapsedTime: Int,     // 12:  in minutes
+                    crsElapsedTime:    Int,     // 13:  in minutes
+                    airTime:           Int,     // 14:  in minutes
+                    arrDelay:          Int,     // 15:  arrival delay, in minutes
+                    depDelay:          Int,     // 16:  departure delay, in minutes
+                    taxiIn:            Int,     // 20:  taxi in time, in minutes
+                    taxiOut:           Int      // 21:  taxi out time in minutes
                   ) extends Ordered[Times] {
-    override def compare(that: Times): Int = {
+    /** Only compare the first four fields */
+    def compare(that: Times): Int = {
       val diffDepTime = depTime - that.depTime
       if (diffDepTime != 0) diffDepTime
       else {
@@ -93,62 +93,66 @@ object Flight {
       }
     }
 
-
-    override def toString: String =
+    // Write as a tuple.
+    override def toString =
       s"($depTime,$crsDepTime,$arrTime,$crsArrTime,$actualElapsedTime,$crsElapsedTime,$airTime,$arrDelay,$depDelay,$taxiIn,$taxiOut)"
   }
-    // The string fields are NOT quoted.
-    def parse(line: String): Option[Flight] = {
-      val fields = line.trim.split("""\s*,\s*""")
-      try {
-        if (fields(0) == "Year") None
-        else {
-          import Conversions.toInt
-          Some(Flight(
-            Date(
-              toInt(fields(0)),
-              toInt(fields(1)),
-              toInt(fields(2)),
-              toInt(fields(3))),
-            Times(
-              toInt(fields(4)),
-              toInt(fields(5)),
-              toInt(fields(6)),
-              toInt(fields(7)),
-              toInt(fields(11)),
-              toInt(fields(12)),
-              toInt(fields(13)),
-              toInt(fields(14)),
-              toInt(fields(15)),
-              toInt(fields(19)),
-              toInt(fields(20))),
-            fields(8).trim,
-            toInt(fields(9)),
-            fields(10).trim,
-            fields(16).trim,
-            fields(17).trim,
-            toInt(fields(18)),
-            toInt(fields(21)),
-            fields(22).trim,
-            toInt(fields(23)),
-            toInt(fields(24)),
-            toInt(fields(25)),
-            toInt(fields(26)),
-            toInt(fields(27)),
-            toInt(fields(28))))
-        }
-      } catch {
-        case ex: NumberFormatException =>
-          Console.err.println(s"$ex: line = $line")
-          None
-        case ex: IndexOutOfBoundsException =>
-          Console.err.println(s"$ex: line = $line")
-          None
+
+  // The string fields are NOT quoted.
+  def parse(line: String): Option[Flight] = {
+    val fields = line.trim.split("""\s*,\s*""")
+    try {
+      if (fields(0) == "Year") None
+      else {
+        import Conversions.toInt
+        Some(Flight(
+          Date(
+            toInt(fields(0)),
+            toInt(fields(1)),
+            toInt(fields(2)),
+            toInt(fields(3))),
+          Times(
+            toInt(fields(4)),
+            toInt(fields(5)),
+            toInt(fields(6)),
+            toInt(fields(7)),
+            toInt(fields(11)),
+            toInt(fields(12)),
+            toInt(fields(13)),
+            toInt(fields(14)),
+            toInt(fields(15)),
+            toInt(fields(19)),
+            toInt(fields(20))),
+          fields(8).trim,
+          toInt(fields(9)),
+          fields(10).trim,
+          fields(16).trim,
+          fields(17).trim,
+          toInt(fields(18)),
+          toInt(fields(21)),
+          fields(22).trim,
+          toInt(fields(23)),
+          toInt(fields(24)),
+          toInt(fields(25)),
+          toInt(fields(26)),
+          toInt(fields(27)),
+          toInt(fields(28))))
       }
+    } catch {
+      case ex: NumberFormatException =>
+        Console.err.println(s"$ex: line = $line")
+        None
+      case ex: IndexOutOfBoundsException =>
+        Console.err.println(s"$ex: line = $line")
+        None
     }
+  }
 }
 
-//  Airport data
+/**
+  * Airport data.
+  * @TODO extends <code>Ordered</code>
+  */
 case class Airport(
                     iata:      String,    // 1: IATA code
                     airport:   String,    // 2: Name
@@ -163,40 +167,45 @@ object Airport {
   // All the string fields are quoted, including in the header row, UNLESS
   // the value is NA. There is still one entry we don't handle correctly,
   // where the name is "W. H. \"Bud\" Barron ", due to the escaped quotes.
-
-  val headerRE: Regex = """^\s*"iata"\s*,.*""".r
-  val lineRE: Regex =
-    """^\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"?([^"]+)"?\s*,\s*"?([^"]+)"?\s*,\s*"([^"]+)"\s*,\s*([-.\d]+)\s*,\s*([-.\d]+)\s*$""".r
+  import Conversions.toInt
+  val headerRE = """^\s*"iata"\s*,.*""".r
+  val lineRE = """^\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"?([^"]+)"?\s*,\s*"?([^"]+)"?\s*,\s*"([^"]+)"\s*,\s*([-.\d]+)\s*,\s*([-.\d]+)\s*$""".r
   def parse(s: String): Option[Airport] = s match {
-    case headerRE() ⇒ None
-    case lineRE(iata, airport, city, state, country, lat, lng) ⇒
+    case headerRE() => None
+    case lineRE(iata, airport, city, state, country, lat, lng) =>
       Some(Airport(iata.trim, airport.trim, city.trim, state.trim, country.trim, lat.toFloat, lng.toFloat))
-    case line ⇒
+    case line =>
       Console.err.println(s"ERROR: Invalid Airport line: $line")
       None
   }
 }
 
-//  Carrier data
+/**
+  * Carrier data.
+  * @TODO extends <code>Ordered</code>
+  */
 case class Carrier(
-                  code: String, // 1: Airline code, e.g., UA for United Airlines
-                  description: String  // 2: Full name
+                    code:        String,  // 1: Airline code, e.g., UA for United Airlines
+                    description: String   // 2: Full name
                   )
 
 object Carrier {
-//    The two strings are quoted but not including the header row
-  val headerRE: Regex = """^\s*Code\s*,.*""".r
-  val lineRE: Regex = """^\s*"([^"]+)"\s*,\s*"([^"]+)"\s*$""".r
+  // The two string fields are quoted, but NOT including the header row.
+  val headerRE = """^\s*Code\s*,.*""".r
+  val lineRE = """^\s*"([^"]+)"\s*,\s*"([^"]+)"\s*$""".r
   def parse(line: String): Option[Carrier] = line match {
-    case headerRE() ⇒ None
-    case lineRE(code, desc) ⇒ Some(Carrier(code.trim, desc.trim))
-    case `line` ⇒
+    case headerRE() => None
+    case lineRE(code, desc) => Some(Carrier(code.trim, desc.trim))
+    case line =>
       Console.err.println(s"ERROR: Invalid Carrier line: $line")
       None
   }
 }
 
-//  Plane data
+/**
+  * Plane data.
+  * @TODO extends <code>Ordered</code>
+  */
 case class Plane(
                   tailNum:      String,  // 1: E.g., N12345
                   kind:         String,  // 2: Usually "Corporation"
@@ -210,22 +219,19 @@ case class Plane(
                 )
 
 object Plane {
-//    The string fields are NOT quoted.
-  val headerRE: Regex = """^\s*tailnum\s*,.*""".r
-  val tailOnlyRE: Regex = """^\s*(N\w+)\s*$""".r
-  val lineRE: Regex =
-    """^\s*(N[^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*(\S+)\s*$""".r
-
+  // The string fields are NOT quoted.
+  val headerRE   = """^\s*tailnum\s*,.*""".r
+  val tailOnlyRE = """^\s*(N\w+)\s*$""".r
+  val lineRE     = """^\s*(N[^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*([^,]+)\s*,\s*(\S+)\s*$""".r
   def parse(line: String): Option[Plane] = line match {
-    case headerRE() ⇒ None
-    case tailOnlyRE(tail) ⇒
+    case headerRE() => None
+    case tailOnlyRE(tail) =>
       Some(Plane(tail, "", "", "", "", "", "", "", 0))
-    case lineRE(tail, kind, man, iss, mod, stat, air, eng, yr) ⇒
+    case lineRE(tail, kind, man, iss, mod, stat, air, eng, yr) =>
       val year = if (yr == "None") -1 else Conversions.toInt(yr)
       Some(Plane(tail, kind, man, iss, mod, stat, air, eng, year))
-    case `line` ⇒
+    case line =>
       Console.err.println(s"ERROR: Invalid Plane line: $line")
       None
   }
 }
-
